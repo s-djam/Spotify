@@ -1,0 +1,351 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Packages
+
+```{r message=FALSE}
+library(jsonlite)
+library(lubridate)
+library(gghighlight)
+library(spotifyr)
+library(tidyverse)
+library(knitr)
+library(plotly)
+```
+
+# Import des données
+
+```{r}
+# 2017 - 2019
+hist_17_19 = fromJSON("Streaming_History_Audio_2017-2019_0.json", flatten = TRUE)
+# 2019 - 2020
+hist_19_20 = fromJSON("Streaming_History_Audio_2019-2020_1.json", flatten = TRUE)
+# 2020 - 2022 
+hist_20_22 = fromJSON("Streaming_History_Audio_2020-2022_2.json", flatten = TRUE)
+# 2022 - 2023
+hist_22_23 = fromJSON("Streaming_History_Audio_2022-2023_3.json", flatten = TRUE)
+# 2023
+hist_23 = fromJSON("Streaming_History_Audio_2023_4.json", flatten = TRUE)
+
+# Assembler les dataframes
+history = rbind(hist_17_19, hist_19_20, hist_20_22, hist_22_23, hist_23)
+```
+
+# Data preprocessing
+
+Je conserve les variables pertinentes :
+- ts : Moment où j'ai terminé d'écouter une chanson
+- ms_played : Nb de millisecondes passées à écouter la chanson
+- master_metadata_track _name : Titre de la chanson
+- master_metadata_album_artist_name : Nom de l'artiste
+- master_metadata_album_album_name : Nom de l'album
+
+```{r}
+history = history %>% 
+  select(ts, ms_played, master_metadata_track_name, master_metadata_album_artist_name, master_metadata_album_album_name)
+
+names(history) = c('endTime', 'msPlayed', 'trackName', 'artistName', 'albumName')
+history$endTime = strptime(history$endTime, format = "%Y-%m-%dT%H:%M:%SZ")
+
+# Ajouter date, conversion en s et en min
+mySpotify <- history %>% 
+  as_tibble() %>% 
+  mutate(date = floor_date(endTime, "day") %>% as_date, seconds = msPlayed / 1000, minutes = seconds / 60)
+```
+
+# A quelles dates j'ai le plus ou moins écouté de musique ?
+
+```{r}
+# Combien d'heures / an
+streamingHours_Y <- mySpotify %>% 
+  #filter(date >= "2017-01-01") %>% 
+  group_by(date) %>% 
+  group_by(date = floor_date(date, "year")) %>%
+  summarize(hours = sum(minutes) / 60) %>% 
+  arrange(date) %>% 
+  ggplot(aes(x = date, y = hours)) + 
+  geom_col(aes(fill = hours)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Date", y= "Hours of music playback") + 
+  ggtitle("On what dates I've listened to more or less music on Spotify?", "Playback activity per year")
+streamingHours_Y
+
+# Combien d'heures / mois en 2017
+streamingHours_m17 <- mySpotify %>% 
+  filter(date <= "2017-12-31") %>% 
+  group_by(date = floor_date(date, "month")) %>%
+  summarize(hours = sum(minutes) / 60) %>% 
+  arrange(date) %>% 
+  ggplot(aes(x = date, y = hours)) + 
+  geom_col(aes(fill = hours)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Date", y= "Hours of music playback") + 
+  ggtitle("On what dates I've listened to more or less music on Spotify?", "Playback activity per month in 2017")
+streamingHours_m17
+
+# Combien d'heures / mois en 2018
+streamingHours_m18 <- mySpotify %>% 
+  filter(date >= "2018-01-01" & date <= "2018-12-31") %>% 
+  group_by(date = floor_date(date, "month")) %>%
+  summarize(hours = sum(minutes) / 60) %>% 
+  arrange(date) %>% 
+  ggplot(aes(x = date, y = hours)) + 
+  geom_col(aes(fill = hours)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Date", y= "Hours of music playback") + 
+  ggtitle("On what dates I've listened to more or less music on Spotify?", "Playback activity per month in 2018")
+streamingHours_m18
+
+# Combien d'heures / mois en 2019
+streamingHours_m19 <- mySpotify %>% 
+  filter(date >= "2019-01-01" & date <= "2019-12-31") %>% 
+  group_by(date = floor_date(date, "month")) %>%
+  summarize(hours = sum(minutes) / 60) %>% 
+  arrange(date) %>% 
+  ggplot(aes(x = date, y = hours)) + 
+  geom_col(aes(fill = hours)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Date", y= "Hours of music playback") + 
+  ggtitle("On what dates I've listened to more or less music on Spotify?", "Playback activity per month in 2019")
+streamingHours_m19
+
+# Combien d'heures /mois en 2020
+streamingHours_m20 <- mySpotify %>% 
+  filter(date >= "2020-01-01" & date <= "2020-12-31") %>% 
+  group_by(date = floor_date(date, "month")) %>%
+  summarize(hours = sum(minutes) / 60) %>% 
+  arrange(date) %>% 
+  ggplot(aes(x = date, y = hours)) + 
+  geom_col(aes(fill = hours)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Date", y= "Hours of music playback") + 
+  ggtitle("On what dates I've listened to more or less music on Spotify?", "Playback activity per month in 2020")
+streamingHours_m20
+
+# Combien d'heures /mois en 2021
+streamingHours_m21 <- mySpotify %>% 
+  filter(date >= "2021-01-01" & date <= "2021-12-31") %>% 
+  group_by(date = floor_date(date, "month")) %>%
+  summarize(hours = sum(minutes) / 60) %>% 
+  arrange(date) %>% 
+  ggplot(aes(x = date, y = hours)) + 
+  geom_col(aes(fill = hours)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Date", y= "Hours of music playback") + 
+  ggtitle("On what dates I've listened to more or less music on Spotify?", "Playback activity per month in 2021")
+streamingHours_m21
+
+# Combien d'heures / mois en 2022
+streamingHours_m22 <- mySpotify %>% 
+  filter(date >= "2022-01-01" & date <= "2022-12-31") %>% 
+  group_by(date = floor_date(date, "month")) %>%
+  summarize(hours = sum(minutes) / 60) %>% 
+  arrange(date) %>% 
+  ggplot(aes(x = date, y = hours)) + 
+  geom_col(aes(fill = hours)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Date", y= "Hours of music playback") + 
+  ggtitle("On what dates I've listened to more or less music on Spotify?", "Playback activity per month in 2022")
+streamingHours_m22
+
+# Combien d'heures / mois en 2023
+streamingHours_m23 <- mySpotify %>% 
+  filter(date >= "2023-01-01") %>% 
+  group_by(date = floor_date(date, "month")) %>%
+  summarize(hours = sum(minutes) / 60) %>% 
+  arrange(date) %>% 
+  ggplot(aes(x = date, y = hours)) + 
+  geom_col(aes(fill = hours)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Date", y= "Hours of music playback") + 
+  ggtitle("On what dates I've listened to more or less music on Spotify?", "Playback activity per month in 2023")
+streamingHours_m23
+```
+
+# A quelles heures de la journée j'écoute le plus de musique ?
+
+```{r}
+hoursDay <- mySpotify %>% 
+  #filter(date >= "2019-01-01") %>% 
+  group_by(date, hour = hour(endTime), weekday = wday(date, label = TRUE))%>% 
+  summarize(minutesListened = sum(minutes))
+hoursDay %>% 
+  ggplot(aes(x = hour, y = minutesListened, group = date)) + 
+  geom_col(fill = "#ff6600") +
+  labs(x= "Time of the day", y= "Hours of music playback") + 
+  ggtitle("What time of day I've listened to the most music on Spotify?", "Activity from midnight to 23h")
+
+# PLAYBACK ACTIVITY BY TIME OF THE DAY AND WEEKDAY
+hoursDay %>% 
+  group_by(weekday, hour) %>% 
+  summarize(minutes = sum(minutesListened)) %>% 
+  ggplot(aes(x = hour, weekday, fill = minutes)) + 
+  geom_tile() + 
+  scale_fill_gradient(low = "yellow", high = "red") +
+  labs(x= "Time of the day", y= "Weekday") + 
+  ggtitle("What weekday and time of day I've listened to the most music on Spotify?", "Weekly activity from 0 to 24 hours")
+```
+
+
+
+# Top Artists
+
+```{r}
+# En 2017
+MostListened17 <- mySpotify %>% 
+  filter(date <= "2017-12-31") %>% 
+  group_by(artistName) %>% 
+  summarize(hoursListened = sum(minutes)/60) %>%
+  filter(hoursListened >= 5) %>%
+  ggplot(aes(x = artistName, y = hoursListened)) + 
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Artist", y= "Hours of music playback") + 
+  ggtitle("What were the most listened artists on my Spotify in 2017?", "> 5 hours listened") +
+  theme(axis.text.x = element_text(angle = 90))
+MostListened17
+
+# En 2018
+MostListened18 <- mySpotify %>% 
+  filter(date >= "2018-01-01" & date <= "2018-12-31") %>% 
+  group_by(artistName) %>% 
+  summarize(hoursListened = sum(minutes)/60) %>%
+  filter(hoursListened >= 5) %>%
+  ggplot(aes(x = artistName, y = hoursListened)) + 
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Artist", y= "Hours of music playback") + 
+  ggtitle("What were the most listened artists on my Spotify in 2018?", "> 5 hours listened") +
+  theme(axis.text.x = element_text(angle = 90))
+MostListened18
+
+# En 2019
+MostListened19 <- mySpotify %>% 
+  filter(date >= "2019-01-01" & date <= "2019-12-31") %>% 
+  group_by(artistName) %>% 
+  summarize(hoursListened = sum(minutes)/60) %>%
+  filter(hoursListened >= 5) %>%
+  ggplot(aes(x = artistName, y = hoursListened)) + 
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Artist", y= "Hours of music playback") + 
+  ggtitle("What were the most listened artists on my Spotify in 2019?", "> 5 hours listened") +
+  theme(axis.text.x = element_text(angle = 90))
+MostListened19
+
+# En 2020
+MostListened20 <- mySpotify %>% 
+  filter(date >= "2020-01-01" & date <= "2020-12-31") %>% 
+  group_by(artistName) %>% 
+  summarize(hoursListened = sum(minutes)/60) %>%
+  filter(hoursListened >= 5) %>%
+  ggplot(aes(x = artistName, y = hoursListened)) + 
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Artist", y= "Hours of music playback") + 
+  ggtitle("What were the most listened artists on my Spotify in 2020?", "> 5 hours listened") +
+  theme(axis.text.x = element_text(angle = 90))
+MostListened20
+
+# En 2021
+MostListened21 <- mySpotify %>% 
+  filter(date >= "2021-01-01" & date <= "2021-12-31") %>% 
+  group_by(artistName) %>% 
+  summarize(hoursListened = sum(minutes)/60) %>%
+  filter(hoursListened >= 5) %>%
+  ggplot(aes(x = artistName, y = hoursListened)) + 
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Artist", y= "Hours of music playback") + 
+  ggtitle("What were the most listened artists on my Spotify in 2021?", "> 5 hours listened") +
+  theme(axis.text.x = element_text(angle = 90))
+MostListened21
+
+# En 2022
+MostListened22 <- mySpotify %>% 
+  filter(date >= "2022-01-01" & date <= "2022-12-31") %>% 
+  group_by(artistName) %>% 
+  summarize(hoursListened = sum(minutes)/60) %>%
+  filter(hoursListened >= 5) %>%
+  ggplot(aes(x = artistName, y = hoursListened)) + 
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Artist", y= "Hours of music playback") + 
+  ggtitle("What were the most listened artists on my Spotify in 2022?", "> 5 hours listened") +
+  theme(axis.text.x = element_text(angle = 90))
+MostListened22
+
+# En 2023
+MostListened23 <- mySpotify %>% 
+  filter(date >= "2023-01-01") %>% 
+  group_by(artistName) %>% 
+  summarize(hoursListened = sum(minutes)/60) %>%
+  filter(hoursListened >= 5) %>%
+  ggplot(aes(x = artistName, y = hoursListened)) + 
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Artist", y= "Hours of music playback") + 
+  ggtitle("What were the most listened artists on my Spotify in 2023?", "> 5 hours listened") +
+  theme(axis.text.x = element_text(angle = 90))
+MostListened23
+```
+
+Top Albums
+
+```{r}
+topAlb17 = mySpotify %>%
+  filter(date <= "2017-12-31") %>% 
+  group_by(albumName, artistName) %>%
+  summarise(hoursListened = sum(minutes)/60) %>%
+  arrange(desc(hoursListened))
+topAlb17[1:10,] %>%
+  ggplot(aes(x = paste0(albumName, ' - ', artistName), y = hoursListened)) +
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Album", y= "Hours of music playback") + 
+  ggtitle("What were the 10 most listened albums on my Spotify in 2017?") +
+  theme(axis.text.x = element_text(angle = 90))
+
+topAlb18 = mySpotify %>%
+  filter(date >= "2018-01-01" & date <= "2018-12-31") %>% 
+  group_by(albumName, artistName) %>%
+  summarise(hoursListened = sum(minutes)/60) %>%
+  arrange(desc(hoursListened))
+topAlb18[1:10,] %>%
+  ggplot(aes(x = paste0(albumName, ' - ', artistName), y = hoursListened)) +
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Album", y= "Hours of music playback") + 
+  ggtitle("What were the 10 most listened albums on my Spotify in 2018?") +
+  theme(axis.text.x = element_text(angle = 90))
+
+topAlb19 = mySpotify %>%
+  filter(date >= "2019-01-01" & date <= "2019-12-31") %>% 
+  group_by(albumName, artistName) %>%
+  summarise(hoursListened = sum(minutes)/60) %>%
+  arrange(desc(hoursListened))
+topAlb19[1:10,] %>%
+  ggplot(aes(x = paste0(albumName, ' - ', artistName), y = hoursListened)) +
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Album", y= "Hours of music playback") + 
+  ggtitle("What were the 10 most listened albums on my Spotify in 2019?") +
+  theme(axis.text.x = element_text(angle = 45))
+
+topAlb20 = mySpotify %>%
+  filter(date >= "2020-01-01" & date <= "2020-12-31") %>% 
+  group_by(albumName, artistName) %>%
+  summarise(hoursListened = sum(minutes)/60) %>%
+  arrange(desc(hoursListened))
+topAlb20[1:10,] %>%
+  ggplot(aes(x = paste0(albumName, ' - ', artistName), y = hoursListened)) +
+  geom_col(aes(fill = hoursListened)) +
+  scale_fill_gradient(low = "yellow", high = "red") + 
+  labs(x= "Album", y= "Hours of music playback") + 
+  ggtitle("What were the 10 most listened albums on my Spotify in 2020?") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+
