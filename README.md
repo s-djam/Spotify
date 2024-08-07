@@ -1,3 +1,3 @@
 # Spotify
 
-Un mini projet pour explorer mes données Spotify.
+A little notebook to explore my Spotify data through the years. 
